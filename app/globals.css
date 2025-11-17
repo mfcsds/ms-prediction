@@ -118,5 +118,20 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .material-button {
+    @apply rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium;
+  }
+  
+  .material-card {
+    @apply rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300;
+  }
+  
+  .material-input {
+    @apply rounded-lg border-2 focus:border-primary transition-colors duration-200;
   }
 }

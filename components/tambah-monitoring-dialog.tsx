@@ -17,7 +17,7 @@ export function TambahMonitoringDialog({ patientId }: { patientId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Tambah Data Monitoring</Button>
+        <Button className="rounded-xl shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 h-11 px-6 font-medium">Tambah Data Monitoring</Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
