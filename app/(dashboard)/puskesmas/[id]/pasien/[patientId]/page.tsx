@@ -100,56 +100,418 @@ export default function PatientDetailPage() {
 
   const generatePDFReport = () => {
     const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.width
+    const pageHeight = doc.internal.pageSize.height
+    const latestData = allData[allData.length - 1]
     
-    // Header
-    doc.setFontSize(18)
-    doc.text("Laporan Monitoring Kesehatan Maternal", 14, 20)
+    // Helper functions
+    const drawLine = (y: number, color = [200, 200, 200]) => {
+      doc.setDrawColor(color[0], color[1], color[2])
+      doc.line(14, y, pageWidth - 14, y)
+    }
     
-    // Patient Info
+    const getRiskColor = (risk: string): [number, number, number] => {
+      if (risk === "high risk") return [220, 38, 38]
+      if (risk === "mid risk") return [234, 179, 8]
+      return [34, 197, 94]
+    }
+
+    // ========== PAGE 1: COVER & PATIENT INFO ==========
+    
+    // Header gradient background
+    doc.setFillColor(59, 130, 246)
+    doc.rect(0, 0, pageWidth, 50, 'F')
+    doc.setFillColor(147, 51, 234)
+    doc.rect(0, 45, pageWidth, 10, 'F')
+    
+    // Logo/Icon placeholder
+    doc.setFillColor(255, 255, 255)
+    doc.circle(25, 25, 8, 'F')
+    doc.setTextColor(59, 130, 246)
     doc.setFontSize(12)
-    doc.text(`Nama: ${patient.nama}`, 14, 35)
-    doc.text(`Usia: ${patient.usia} tahun`, 14, 42)
-    doc.text(`Alamat: ${patient.alamat}`, 14, 49)
-    doc.text(`Telepon: ${patient.telp}`, 14, 56)
-    doc.text(`Tanggal Laporan: ${new Date().toLocaleDateString('id-ID')}`, 14, 63)
+    doc.setFont("helvetica", "bold")
+    doc.text("MS", 21, 28)
     
-    // Summary Stats
-    const latestData = monitoringData[0]
+    // Title
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(22)
+    doc.setFont("helvetica", "bold")
+    doc.text("LAPORAN MONITORING", 40, 22)
+    doc.setFontSize(16)
+    doc.text("KESEHATAN MATERNAL", 40, 32)
+    
+    // Report date badge
+    doc.setFillColor(255, 255, 255)
+    doc.roundedRect(pageWidth - 60, 15, 46, 20, 3, 3, 'F')
+    doc.setTextColor(59, 130, 246)
+    doc.setFontSize(8)
+    doc.text("Tanggal Laporan", pageWidth - 55, 22)
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "bold")
+    doc.text(new Date().toLocaleDateString('id-ID'), pageWidth - 55, 30)
+    
+    // Patient Info Card
+    doc.setFillColor(248, 250, 252)
+    doc.roundedRect(14, 65, pageWidth - 28, 55, 4, 4, 'F')
+    doc.setDrawColor(226, 232, 240)
+    doc.roundedRect(14, 65, pageWidth - 28, 55, 4, 4, 'S')
+    
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text("DATA PASIEN", 20, 78)
+    
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(10)
+    doc.setTextColor(71, 85, 105)
+    
+    // Left column
+    doc.text("Nama Lengkap", 20, 90)
+    doc.setTextColor(30, 41, 59)
+    doc.setFont("helvetica", "bold")
+    doc.text(patient.nama, 20, 97)
+    
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(71, 85, 105)
+    doc.text("Alamat", 20, 108)
+    doc.setTextColor(30, 41, 59)
+    doc.setFont("helvetica", "bold")
+    doc.text(patient.alamat, 20, 115)
+    
+    // Right column
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(71, 85, 105)
+    doc.text("Usia", 110, 90)
+    doc.setTextColor(30, 41, 59)
+    doc.setFont("helvetica", "bold")
+    doc.text(`${patient.usia} tahun`, 110, 97)
+    
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(71, 85, 105)
+    doc.text("No. Telepon", 110, 108)
+    doc.setTextColor(30, 41, 59)
+    doc.setFont("helvetica", "bold")
+    doc.text(patient.telp, 110, 115)
+    
+    // Status Summary Section
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text("RINGKASAN STATUS KESEHATAN", 14, 135)
+    drawLine(140, [59, 130, 246])
+    
+    // Status Cards Row
+    const cardWidth = (pageWidth - 42) / 3
+    const cardY = 148
+    
+    // Card 1: Risk Level
+    const riskColor = getRiskColor(latestRisk)
+    doc.setFillColor(riskColor[0], riskColor[1], riskColor[2])
+    doc.roundedRect(14, cardY, cardWidth, 35, 3, 3, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    doc.text("Status Risiko Terkini", 18, cardY + 10)
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.text(latestRisk.toUpperCase(), 18, cardY + 25)
+    
+    // Card 2: Total Pemeriksaan
+    doc.setFillColor(59, 130, 246)
+    doc.roundedRect(14 + cardWidth + 7, cardY, cardWidth, 35, 3, 3, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    doc.text("Total Pemeriksaan", 18 + cardWidth + 7, cardY + 10)
+    doc.setFontSize(20)
+    doc.setFont("helvetica", "bold")
+    doc.text(`${allData.length}`, 18 + cardWidth + 7, cardY + 27)
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    doc.text("kali", 40 + cardWidth + 7, cardY + 27)
+    
+    // Card 3: AI Confidence
+    doc.setFillColor(147, 51, 234)
+    doc.roundedRect(14 + (cardWidth + 7) * 2, cardY, cardWidth, 35, 3, 3, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "normal")
+    doc.text("AI Confidence", 18 + (cardWidth + 7) * 2, cardY + 10)
+    doc.setFontSize(20)
+    doc.setFont("helvetica", "bold")
+    doc.text(`${(latestData.confidence * 100).toFixed(0)}%`, 18 + (cardWidth + 7) * 2, cardY + 27)
+    
+    // Vital Signs Summary
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text("PARAMETER VITAL TERKINI", 14, 200)
+    drawLine(205, [59, 130, 246])
+    
+    // Vital signs table
+    const vitalData = [
+      ["Tekanan Darah Sistolik", `${latestData.systolicBP.toFixed(0)} mmHg`, latestData.systolicBP > 140 ? "Tinggi" : latestData.systolicBP > 130 ? "Waspada" : "Normal"],
+      ["Tekanan Darah Diastolik", `${latestData.diastolicBP.toFixed(0)} mmHg`, latestData.diastolicBP > 90 ? "Tinggi" : latestData.diastolicBP > 85 ? "Waspada" : "Normal"],
+      ["Gula Darah", `${latestData.bs.toFixed(1)} mmol/L`, latestData.bs > 9 ? "Tinggi" : latestData.bs > 8 ? "Waspada" : "Normal"],
+      ["Suhu Tubuh", `${latestData.bodyTemp.toFixed(1)} °F`, latestData.bodyTemp > 99.5 ? "Tinggi" : "Normal"],
+      ["Detak Jantung", `${latestData.heartRate.toFixed(0)} bpm`, latestData.heartRate > 100 ? "Tinggi" : latestData.heartRate < 60 ? "Rendah" : "Normal"]
+    ]
+    
+    autoTable(doc, {
+      startY: 210,
+      head: [['Parameter', 'Nilai', 'Status']],
+      body: vitalData,
+      theme: 'striped',
+      headStyles: { 
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 70 },
+        1: { cellWidth: 50, halign: 'center' },
+        2: { cellWidth: 40, halign: 'center' }
+      },
+      didParseCell: (data) => {
+        if (data.column.index === 2 && data.section === 'body') {
+          const status = data.cell.raw as string
+          if (status === "Tinggi" || status === "Rendah") {
+            data.cell.styles.textColor = [220, 38, 38]
+            data.cell.styles.fontStyle = 'bold'
+          } else if (status === "Waspada") {
+            data.cell.styles.textColor = [234, 179, 8]
+            data.cell.styles.fontStyle = 'bold'
+          } else {
+            data.cell.styles.textColor = [34, 197, 94]
+          }
+        }
+      }
+    })
+    
+    // ========== PAGE 2: DETAILED MONITORING DATA ==========
+    doc.addPage()
+    
+    // Page 2 Header
+    doc.setFillColor(59, 130, 246)
+    doc.rect(0, 0, pageWidth, 25, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.text("RIWAYAT MONITORING KESEHATAN", 14, 17)
+    
+    // Statistics Summary
+    const highRiskCount = allData.filter(d => d.riskLevel === "high risk").length
+    const midRiskCount = allData.filter(d => d.riskLevel === "mid risk").length
+    const lowRiskCount = allData.filter(d => d.riskLevel === "low risk").length
+    
+    doc.setTextColor(30, 41, 59)
     doc.setFontSize(11)
-    doc.text("Status Terkini:", 14, 75)
-    doc.text(`Risk Level: ${latestData.riskLevel.toUpperCase()}`, 14, 82)
-    doc.text(`AI Prediction: ${latestData.aiPrediction} (${(latestData.confidence * 100).toFixed(0)}% confidence)`, 14, 89)
-    doc.text(`Total Pemeriksaan: ${monitoringData.length} kali`, 14, 96)
+    doc.setFont("helvetica", "bold")
+    doc.text("Distribusi Risiko:", 14, 40)
     
-    // Table
-    const tableData = monitoringData.slice(0, 20).map(d => [
+    // Risk distribution bars
+    const barY = 45
+    const barHeight = 8
+    const totalWidth = pageWidth - 28
+    const highWidth = (highRiskCount / allData.length) * totalWidth
+    const midWidth = (midRiskCount / allData.length) * totalWidth
+    const lowWidth = (lowRiskCount / allData.length) * totalWidth
+    
+    doc.setFillColor(220, 38, 38)
+    doc.rect(14, barY, highWidth, barHeight, 'F')
+    doc.setFillColor(234, 179, 8)
+    doc.rect(14 + highWidth, barY, midWidth, barHeight, 'F')
+    doc.setFillColor(34, 197, 94)
+    doc.rect(14 + highWidth + midWidth, barY, lowWidth, barHeight, 'F')
+    
+    // Legend
+    doc.setFontSize(8)
+    doc.setFont("helvetica", "normal")
+    doc.setFillColor(220, 38, 38)
+    doc.circle(20, 62, 3, 'F')
+    doc.setTextColor(71, 85, 105)
+    doc.text(`High Risk: ${highRiskCount} (${((highRiskCount/allData.length)*100).toFixed(1)}%)`, 26, 64)
+    
+    doc.setFillColor(234, 179, 8)
+    doc.circle(80, 62, 3, 'F')
+    doc.text(`Mid Risk: ${midRiskCount} (${((midRiskCount/allData.length)*100).toFixed(1)}%)`, 86, 64)
+    
+    doc.setFillColor(34, 197, 94)
+    doc.circle(140, 62, 3, 'F')
+    doc.text(`Low Risk: ${lowRiskCount} (${((lowRiskCount/allData.length)*100).toFixed(1)}%)`, 146, 64)
+    
+    // Detailed monitoring table
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(11)
+    doc.setFont("helvetica", "bold")
+    doc.text("Data Pemeriksaan (20 Data Terakhir)", 14, 78)
+    
+    const tableData = allData.slice(-20).reverse().map(d => [
       d.date,
       d.systolicBP.toFixed(0),
       d.diastolicBP.toFixed(0),
       d.bs.toFixed(1),
       d.bodyTemp.toFixed(1),
       d.heartRate.toFixed(0),
-      d.riskLevel
+      d.riskLevel.replace(' risk', '').toUpperCase(),
+      `${(d.confidence * 100).toFixed(0)}%`
     ])
     
     autoTable(doc, {
-      startY: 105,
-      head: [['Tanggal', 'Systolic', 'Diastolic', 'BS', 'Temp', 'HR', 'Risk']],
+      startY: 82,
+      head: [['Tanggal', 'Sistolik', 'Diastolik', 'Gula Darah', 'Suhu', 'Detak Jantung', 'Risiko', 'AI Conf.']],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246] },
-      styles: { fontSize: 8 }
+      headStyles: { 
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'center'
+      },
+      bodyStyles: { fontSize: 7, halign: 'center' },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 18 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 15 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 18 },
+        7: { cellWidth: 18 }
+      },
+      didParseCell: (data) => {
+        if (data.column.index === 6 && data.section === 'body') {
+          const risk = data.cell.raw as string
+          if (risk === "HIGH") {
+            data.cell.styles.textColor = [220, 38, 38]
+            data.cell.styles.fontStyle = 'bold'
+          } else if (risk === "MID") {
+            data.cell.styles.textColor = [234, 179, 8]
+            data.cell.styles.fontStyle = 'bold'
+          } else {
+            data.cell.styles.textColor = [34, 197, 94]
+          }
+        }
+      }
     })
     
-    // Footer
+    // ========== PAGE 3: AI ANALYSIS & RECOMMENDATIONS ==========
+    doc.addPage()
+    
+    // Page 3 Header
+    doc.setFillColor(147, 51, 234)
+    doc.rect(0, 0, pageWidth, 25, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.text("ANALISIS AI & REKOMENDASI", 14, 17)
+    
+    // AI Analysis Section
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text("Analisis Kecerdasan Buatan", 14, 40)
+    drawLine(45, [147, 51, 234])
+    
+    doc.setFillColor(248, 250, 252)
+    doc.roundedRect(14, 50, pageWidth - 28, 60, 4, 4, 'F')
+    
+    doc.setFontSize(10)
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(71, 85, 105)
+    
+    const aiAnalysis = latestRisk === "high risk" 
+      ? "Berdasarkan analisis data monitoring, sistem AI mendeteksi beberapa parameter vital yang berada di luar rentang normal. Tekanan darah dan/atau gula darah menunjukkan peningkatan yang memerlukan perhatian medis segera. Disarankan untuk segera berkonsultasi dengan dokter spesialis kandungan."
+      : latestRisk === "mid risk"
+      ? "Analisis AI menunjukkan beberapa parameter kesehatan yang perlu diperhatikan. Meskipun tidak dalam kondisi darurat, monitoring rutin dan penyesuaian gaya hidup sangat dianjurkan. Pastikan untuk menjaga pola makan sehat dan istirahat yang cukup."
+      : "Semua parameter vital berada dalam rentang normal. Kondisi kesehatan maternal menunjukkan stabilitas yang baik. Lanjutkan pola hidup sehat dan pemeriksaan rutin sesuai jadwal yang telah ditentukan."
+    
+    const splitAnalysis = doc.splitTextToSize(aiAnalysis, pageWidth - 40)
+    doc.text(splitAnalysis, 20, 65)
+    
+    // Recommendations Section
+    doc.setTextColor(30, 41, 59)
+    doc.setFontSize(12)
+    doc.setFont("helvetica", "bold")
+    doc.text("Rekomendasi Tindakan", 14, 125)
+    drawLine(130, [147, 51, 234])
+    
+    const recommendations = latestRisk === "high risk" ? [
+      ["1", "Segera konsultasi dengan dokter spesialis kandungan dalam 24-48 jam"],
+      ["2", "Pantau tekanan darah setiap 4 jam dan catat hasilnya"],
+      ["3", "Kurangi asupan garam dan makanan tinggi lemak"],
+      ["4", "Istirahat total (bed rest) jika direkomendasikan dokter"],
+      ["5", "Hindari aktivitas berat dan stress berlebihan"]
+    ] : latestRisk === "mid risk" ? [
+      ["1", "Jadwalkan pemeriksaan rutin setiap 2 minggu"],
+      ["2", "Pantau tekanan darah minimal 2x sehari"],
+      ["3", "Jaga pola makan seimbang dengan nutrisi lengkap"],
+      ["4", "Lakukan olahraga ringan seperti jalan kaki 30 menit/hari"],
+      ["5", "Pastikan tidur cukup 7-8 jam per malam"]
+    ] : [
+      ["1", "Lanjutkan pemeriksaan rutin sesuai jadwal (1x per bulan)"],
+      ["2", "Pertahankan pola makan sehat dan seimbang"],
+      ["3", "Tetap aktif dengan olahraga ringan yang aman untuk ibu hamil"],
+      ["4", "Konsumsi suplemen kehamilan sesuai anjuran dokter"],
+      ["5", "Jaga kesehatan mental dan hindari stress"]
+    ]
+    
+    autoTable(doc, {
+      startY: 135,
+      head: [['No', 'Rekomendasi']],
+      body: recommendations,
+      theme: 'plain',
+      headStyles: { 
+        fillColor: [147, 51, 234],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10
+      },
+      bodyStyles: { fontSize: 10 },
+      columnStyles: {
+        0: { cellWidth: 15, halign: 'center' },
+        1: { cellWidth: pageWidth - 43 }
+      }
+    })
+    
+    // Disclaimer
+    doc.setFillColor(254, 243, 199)
+    doc.roundedRect(14, 220, pageWidth - 28, 30, 4, 4, 'F')
+    doc.setDrawColor(234, 179, 8)
+    doc.roundedRect(14, 220, pageWidth - 28, 30, 4, 4, 'S')
+    
+    doc.setTextColor(146, 64, 14)
+    doc.setFontSize(9)
+    doc.setFont("helvetica", "bold")
+    doc.text("DISCLAIMER:", 20, 232)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(8)
+    const disclaimer = "Laporan ini dihasilkan oleh sistem AI dan bersifat sebagai alat bantu monitoring. Hasil analisis tidak menggantikan diagnosis medis profesional. Selalu konsultasikan dengan tenaga kesehatan untuk keputusan medis."
+    const splitDisclaimer = doc.splitTextToSize(disclaimer, pageWidth - 44)
+    doc.text(splitDisclaimer, 20, 240)
+    
+    // Footer on all pages
     const pageCount = doc.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
+      
+      // Footer line
+      doc.setDrawColor(200, 200, 200)
+      doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20)
+      
+      // Footer text
       doc.setFontSize(8)
-      doc.text(`Halaman ${i} dari ${pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' })
+      doc.setTextColor(150, 150, 150)
+      doc.setFont("helvetica", "normal")
+      doc.text("Maternal Status Monitoring System", 14, pageHeight - 12)
+      doc.text(`Halaman ${i} dari ${pageCount}`, pageWidth / 2, pageHeight - 12, { align: 'center' })
+      doc.text(new Date().toLocaleString('id-ID'), pageWidth - 14, pageHeight - 12, { align: 'right' })
     }
     
-    doc.save(`Laporan_${patient.nama.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`)
+    doc.save(`Laporan_Maternal_${patient.nama.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`)
   }
 
   const getRiskColor = (risk: string) => {
